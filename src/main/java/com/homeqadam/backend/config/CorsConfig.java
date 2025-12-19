@@ -18,7 +18,8 @@ public class CorsConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "https://osonlyapp.com",
-                "https://landing.osonlyapp.com"
+                "https://landing.osonlyapp.com",
+                "https://homeqadam-backend.onrender.com"
         ));
 
         config.setAllowedMethods(List.of(
