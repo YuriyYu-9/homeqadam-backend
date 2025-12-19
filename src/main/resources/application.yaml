@@ -1,3 +1,5 @@
 spring:
   application:
     name: homeqadam-backend
+  profiles:
+    active: dev
