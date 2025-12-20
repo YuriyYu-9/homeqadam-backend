@@ -1,19 +1,25 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   datasource:
     url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: false
     properties:
       hibernate:
-        show_sql: false
-        format_sql: false
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   mail:
-    host: ${MAIL_HOST:smtp.mail.ru}
-    port: ${MAIL_PORT:465}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     properties:
@@ -26,9 +32,10 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    expiration-ms: ${JWT_EXP_MS:3600000}
+    expiration-ms: ${JWT_EXP_MS}
 
-logging:
-  level:
-    org.springframework.mail: INFO
-    org.springframework.web: INFO
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
