@@ -1,5 +1,6 @@
 package com.homeqadam.backend.order;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.homeqadam.backend.category.ServiceCategory;
 import com.homeqadam.backend.user.User;
 import jakarta.persistence.*;
@@ -16,16 +17,32 @@ import java.time.LocalDateTime;
 @Builder
 public class Order {
 
+    // =========================
+    // ID
+    // =========================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Кто создал заказ
+    // =========================
+    // CLIENT (создатель заказа)
+    // =========================
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonIgnore
     private User customer;
 
-    // Категория услуги
+    // =========================
+    // TECHNICIAN (исполнитель)
+    // =========================
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "technician_id")
+    @JsonIgnore
+    private User technician;
+
+    // =========================
+    // ORDER DATA
+    // =========================
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private ServiceCategory category;
@@ -39,31 +56,58 @@ public class Order {
     @Column(nullable = false, length = 255)
     private String address;
 
-    // Когда нужно выполнить (опционально)
+    // когда клиенту удобно выполнить заказ
     private LocalDateTime scheduledAt;
 
+    // =========================
+    // STATUS
+    // =========================
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private OrderStatus status;
 
+    // =========================
+    // TIMESTAMPS (жизненный цикл)
+    // =========================
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    // мастер принял заказ
+    private LocalDateTime acceptedAt;
+
+    // мастер начал выполнение
+    private LocalDateTime startedAt;
+
+    // клиент подтвердил завершение
+    private LocalDateTime completedAt;
+
+    // заказ отменён
+    private LocalDateTime cancelledAt;
+
+    // кто отменил заказ
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private CancelledBy cancelledBy;
+
+    // =========================
+    // JPA LIFECYCLE
+    // =========================
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-        if (status == null) {
-            status = OrderStatus.NEW;
+        this.createdAt = now;
+        this.updatedAt = now;
+
+        if (this.status == null) {
+            this.status = OrderStatus.NEW;
         }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

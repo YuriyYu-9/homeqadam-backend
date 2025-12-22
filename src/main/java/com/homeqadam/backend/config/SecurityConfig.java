@@ -29,20 +29,39 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sm ->
+                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+
+                        // ---------- PUBLIC ----------
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/register",
+                                "/auth/verify"
+                        ).permitAll()
+
+                        .requestMatchers("/public/**").permitAll()
+
+                        // ---------- AUTH ----------
+                        .requestMatchers("/auth/me").authenticated()
+                        .requestMatchers("/profile/**").authenticated()
+
+                        // ---------- ROLE ----------
                         .requestMatchers("/client/**").hasRole("CLIENT")
                         .requestMatchers("/technician/**").hasRole("TECHNICIAN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
-    // 🔑 ОБЯЗАТЕЛЬНО для Spring Security 6+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration

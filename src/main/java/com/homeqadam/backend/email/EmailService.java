@@ -16,8 +16,8 @@ public class EmailService {
 
         message.setFrom("homeqadam@mail.ru");           // ВАЖНО: тот же адрес, что и spring.mail.username
         message.setTo(to);
-        message.setSubject("HomeQadam - подтверждение почты");
-        message.setText("Ваш код подтверждения: " + code + "\n\nКод действителен 15 минут.");
+        message.setSubject("Osonly — подтверждение почты");
+        message.setText("Ваш код подтверждения для Osonly: " + code + "\n\nКод действителен 15 минут.");
 
         mailSender.send(message);
     }

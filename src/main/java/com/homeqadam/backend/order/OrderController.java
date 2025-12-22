@@ -3,49 +3,70 @@ package com.homeqadam.backend.order;
 import com.homeqadam.backend.order.dto.OrderRequest;
 import com.homeqadam.backend.order.dto.OrderResponse;
 import com.homeqadam.backend.security.details.CustomUserDetails;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/orders")
 @RequiredArgsConstructor
+@RequestMapping("/client/orders")
 public class OrderController {
 
     private final OrderService orderService;
 
-    // Создать заказ (нужен авторизованный пользователь)
+    // =========================
+    // CREATE ORDER (CLIENT)
+    // =========================
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody OrderRequest request
+    public OrderResponse create(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestBody OrderRequest request
     ) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        Long userId = userDetails.getUser().getId();
-
-        OrderResponse response = orderService.createOrder(userId, request);
-        return ResponseEntity.ok(response);
+        return orderService.createOrder(
+                user.getUser().getId(),
+                request
+        );
     }
 
-    // Получить свои заказы
+    // =========================
+    // MY ORDERS (CLIENT)
+    // =========================
     @GetMapping("/my")
-    public ResponseEntity<List<OrderResponse>> getMyOrders(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+    public List<OrderResponse> myOrders(
+            @AuthenticationPrincipal CustomUserDetails user
     ) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).build();
-        }
+        return orderService.getMyOrders(
+                user.getUser().getId()
+        );
+    }
 
-        Long userId = userDetails.getUser().getId();
+    // =========================
+    // CANCEL ORDER (CLIENT)
+    // =========================
+    @PostMapping("/{orderId}/cancel")
+    public OrderResponse cancel(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        return orderService.cancelByClient(
+                orderId,
+                user.getUser().getId()
+        );
+    }
 
-        List<OrderResponse> orders = orderService.getMyOrders(userId);
-        return ResponseEntity.ok(orders);
+    // =========================
+    // COMPLETE ORDER (CLIENT)
+    // =========================
+    @PostMapping("/{orderId}/complete")
+    public OrderResponse complete(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        return orderService.completeByClient(
+                orderId,
+                user.getUser().getId()
+        );
     }
 }

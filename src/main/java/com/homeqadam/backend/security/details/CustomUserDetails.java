@@ -20,9 +20,15 @@ public class CustomUserDetails implements UserDetails {
         return user;
     }
 
+    /**
+     * 🔥 КРИТИЧНО
+     * Spring Security ожидает ROLE_*
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        return List.of(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
     }
 
     @Override
@@ -30,6 +36,9 @@ public class CustomUserDetails implements UserDetails {
         return user.getPassword();
     }
 
+    /**
+     * Используем email как username
+     */
     @Override
     public String getUsername() {
         return user.getEmail();
