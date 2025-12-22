@@ -14,7 +14,7 @@ public class EmailService {
     public void sendVerificationEmail(String to, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
 
-        message.setFrom("homeqadam@mail.ru");           // ВАЖНО: тот же адрес, что и spring.mail.username
+        message.setFrom("osonly@mail.ru");           // ВАЖНО: тот же адрес, что и spring.mail.username
         message.setTo(to);
         message.setSubject("Osonly — подтверждение почты");
         message.setText("Ваш код подтверждения для Osonly: " + code + "\n\nКод действителен 15 минут.");
