@@ -32,4 +32,14 @@ public class OrderResponse {
     private LocalDateTime cancelledAt;
 
     private CancelledBy cancelledBy;
+
+    /**
+     * Контекстные данные сторон:
+     * - для TECHNICIAN: заполняем customer
+     * - для CLIENT: заполняем technician
+     *
+     * (вторая сторона обычно будет null)
+     */
+    private OrderCustomerDto customer;
+    private OrderTechnicianDto technician;
 }

@@ -1,8 +1,10 @@
 package com.homeqadam.backend.order;
 
 import com.homeqadam.backend.category.ServiceCategory;
+import com.homeqadam.backend.order.dto.OrderCustomerDto;
 import com.homeqadam.backend.order.dto.OrderRequest;
 import com.homeqadam.backend.order.dto.OrderResponse;
+import com.homeqadam.backend.order.dto.OrderTechnicianDto;
 import com.homeqadam.backend.profile.Profile;
 import com.homeqadam.backend.profile.ProfileRepository;
 import com.homeqadam.backend.user.Role;
@@ -48,7 +50,10 @@ public class OrderService {
                 .status(OrderStatus.NEW)
                 .build();
 
-        return toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        // Клиент создаёт — показываем контекст для клиента (technician будет null)
+        return toClientResponse(saved);
     }
 
     // =========================
@@ -58,7 +63,7 @@ public class OrderService {
     public List<OrderResponse> getMyOrders(Long userId) {
         return orderRepository.findByCustomerIdOrderByCreatedAtDesc(userId)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toClientResponse)
                 .toList();
     }
 
@@ -79,7 +84,9 @@ public class OrderService {
         order.setCancelledAt(LocalDateTime.now());
         order.setCancelledBy(CancelledBy.CLIENT);
 
-        return toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        return toClientResponse(saved);
     }
 
     @Transactional
@@ -97,20 +104,21 @@ public class OrderService {
         order.setStatus(OrderStatus.COMPLETED);
         order.setCompletedAt(LocalDateTime.now());
 
-        return toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        return toClientResponse(saved);
     }
 
     // =========================
-    // TECHNICIAN (NEW ARCHITECTURE)
+    // TECHNICIAN
     // =========================
 
     /**
-     * ✅ Основной правильный метод:
-     * Берём специализацию из профиля мастера в БД, а не с фронта.
+     * Основной метод:
+     * категория берётся из профиля мастера в БД.
      */
     @Transactional(readOnly = true)
     public List<OrderResponse> getAvailableOrdersForTechnician(Long technicianId) {
-
         User technician = getUserOrThrow(technicianId, Role.TECHNICIAN);
 
         Profile profile = profileRepository.findByUserIdAndUserRole(technician.getId(), Role.TECHNICIAN)
@@ -125,13 +133,12 @@ public class OrderService {
         return orderRepository
                 .findByStatusAndCategoryOrderByCreatedAtDesc(OrderStatus.NEW, category)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toTechnicianResponse) // мастер видит данные клиента
                 .toList();
     }
 
     /**
-     * ✅ Legacy-метод оставляем, чтобы не ломать ручные тесты с ?category=
-     * (можно будет удалить позже)
+     * Legacy-метод для ручных тестов.
      */
     @Transactional(readOnly = true)
     public List<OrderResponse> getAvailableOrdersForTechnicianLegacy(String categoryRaw) {
@@ -140,7 +147,7 @@ public class OrderService {
         return orderRepository
                 .findByStatusAndCategoryOrderByCreatedAtDesc(OrderStatus.NEW, category)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toTechnicianResponse) // мастер видит данные клиента
                 .toList();
     }
 
@@ -158,7 +165,10 @@ public class OrderService {
         order.setStatus(OrderStatus.ACCEPTED);
         order.setAcceptedAt(LocalDateTime.now());
 
-        return toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        // Мастер принимает — показываем контекст для мастера (customer заполнен)
+        return toTechnicianResponse(saved);
     }
 
     @Transactional
@@ -176,15 +186,95 @@ public class OrderService {
         order.setStatus(OrderStatus.IN_PROGRESS);
         order.setStartedAt(LocalDateTime.now());
 
-        return toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        return toTechnicianResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getTakenOrders(Long technicianId) {
         return orderRepository.findByTechnicianIdOrderByCreatedAtDesc(technicianId)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toTechnicianResponse) // мастер видит данные клиента
                 .toList();
+    }
+
+    // =========================
+    // MAPPERS (контекстные)
+    // =========================
+
+    /**
+     * Ответ для CLIENT:
+     * - technician заполняем (если назначен)
+     * - customer не отдаём
+     */
+    private OrderResponse toClientResponse(Order order) {
+        return baseResponse(order)
+                .customer(null)
+                .technician(buildTechnicianDto(order.getTechnician()))
+                .build();
+    }
+
+    /**
+     * Ответ для TECHNICIAN:
+     * - customer заполняем
+     * - technician не отдаём (т.к. это он сам)
+     */
+    private OrderResponse toTechnicianResponse(Order order) {
+        return baseResponse(order)
+                .customer(buildCustomerDto(order.getCustomer()))
+                .technician(null)
+                .build();
+    }
+
+    /**
+     * Базовые поля ответа (без сторон).
+     */
+    private OrderResponse.OrderResponseBuilder baseResponse(Order order) {
+        return OrderResponse.builder()
+                .id(order.getId())
+                .category(order.getCategory())
+                .title(order.getTitle())
+                .description(order.getDescription())
+                .address(order.getAddress())
+                .scheduledAt(order.getScheduledAt())
+                .status(order.getStatus())
+                .createdAt(order.getCreatedAt())
+                .acceptedAt(order.getAcceptedAt())
+                .startedAt(order.getStartedAt())
+                .completedAt(order.getCompletedAt())
+                .cancelledAt(order.getCancelledAt())
+                .cancelledBy(order.getCancelledBy());
+    }
+
+    private OrderCustomerDto buildCustomerDto(User customer) {
+        if (customer == null) return null;
+
+        Profile p = profileRepository.findByUserId(customer.getId()).orElse(null);
+
+        return OrderCustomerDto.builder()
+                .userId(customer.getId())
+                .firstName(p != null ? p.getFirstName() : null)
+                .lastName(p != null ? p.getLastName() : null)
+                .phone(p != null ? p.getPhone() : null)
+                .telegram(p != null ? p.getTelegram() : null)
+                .build();
+    }
+
+    private OrderTechnicianDto buildTechnicianDto(User technician) {
+        if (technician == null) return null;
+
+        Profile p = profileRepository.findByUserIdAndUserRole(technician.getId(), Role.TECHNICIAN).orElse(null);
+
+        return OrderTechnicianDto.builder()
+                .userId(technician.getId())
+                .firstName(p != null ? p.getFirstName() : null)
+                .lastName(p != null ? p.getLastName() : null)
+                .specialty(p != null ? p.getSpecialty() : null)
+                .experienceYears(p != null ? p.getExperienceYears() : null)
+                .avatarUrl(p != null ? p.getAvatarUrl() : null)
+                .telegram(p != null ? p.getTelegram() : null)
+                .build();
     }
 
     // =========================
@@ -203,24 +293,6 @@ public class OrderService {
             throw new IllegalArgumentException("Invalid role");
         }
         return user;
-    }
-
-    private OrderResponse toResponse(Order order) {
-        return OrderResponse.builder()
-                .id(order.getId())
-                .category(order.getCategory())
-                .title(order.getTitle())
-                .description(order.getDescription())
-                .address(order.getAddress())
-                .scheduledAt(order.getScheduledAt())
-                .status(order.getStatus())
-                .createdAt(order.getCreatedAt())
-                .acceptedAt(order.getAcceptedAt())
-                .startedAt(order.getStartedAt())
-                .completedAt(order.getCompletedAt())
-                .cancelledAt(order.getCancelledAt())
-                .cancelledBy(order.getCancelledBy())
-                .build();
     }
 
     private ServiceCategory parseCategory(String raw) {
