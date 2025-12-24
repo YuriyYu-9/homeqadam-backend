@@ -7,11 +7,20 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    // Заказы клиента
     List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
 
     // Доступные для мастера заказы по категории (NEW)
-    List<Order> findByStatusAndCategoryOrderByCreatedAtDesc(OrderStatus status, ServiceCategory category);
+    List<Order> findByStatusAndCategoryOrderByCreatedAtDesc(
+            OrderStatus status,
+            ServiceCategory category
+    );
 
     // Принятые мастером заказы
     List<Order> findByTechnicianIdOrderByCreatedAtDesc(Long technicianId);
+
+    // =========================
+    // ADMIN
+    // =========================
+    List<Order> findAllByOrderByCreatedAtDesc();
 }

@@ -52,7 +52,6 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // Клиент создаёт — показываем контекст для клиента (technician будет null)
         return toClientResponse(saved);
     }
 
@@ -112,16 +111,12 @@ public class OrderService {
     // =========================
     // TECHNICIAN
     // =========================
-
-    /**
-     * Основной метод:
-     * категория берётся из профиля мастера в БД.
-     */
     @Transactional(readOnly = true)
     public List<OrderResponse> getAvailableOrdersForTechnician(Long technicianId) {
         User technician = getUserOrThrow(technicianId, Role.TECHNICIAN);
 
-        Profile profile = profileRepository.findByUserIdAndUserRole(technician.getId(), Role.TECHNICIAN)
+        Profile profile = profileRepository
+                .findByUserIdAndUserRole(technician.getId(), Role.TECHNICIAN)
                 .orElseThrow(() -> new IllegalStateException("Technician profile not found"));
 
         if (profile.getSpecialty() == null) {
@@ -133,13 +128,10 @@ public class OrderService {
         return orderRepository
                 .findByStatusAndCategoryOrderByCreatedAtDesc(OrderStatus.NEW, category)
                 .stream()
-                .map(this::toTechnicianResponse) // мастер видит данные клиента
+                .map(this::toTechnicianResponse)
                 .toList();
     }
 
-    /**
-     * Legacy-метод для ручных тестов.
-     */
     @Transactional(readOnly = true)
     public List<OrderResponse> getAvailableOrdersForTechnicianLegacy(String categoryRaw) {
         ServiceCategory category = parseCategory(categoryRaw);
@@ -147,7 +139,7 @@ public class OrderService {
         return orderRepository
                 .findByStatusAndCategoryOrderByCreatedAtDesc(OrderStatus.NEW, category)
                 .stream()
-                .map(this::toTechnicianResponse) // мастер видит данные клиента
+                .map(this::toTechnicianResponse)
                 .toList();
     }
 
@@ -167,7 +159,6 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // Мастер принимает — показываем контекст для мастера (customer заполнен)
         return toTechnicianResponse(saved);
     }
 
@@ -195,19 +186,24 @@ public class OrderService {
     public List<OrderResponse> getTakenOrders(Long technicianId) {
         return orderRepository.findByTechnicianIdOrderByCreatedAtDesc(technicianId)
                 .stream()
-                .map(this::toTechnicianResponse) // мастер видит данные клиента
+                .map(this::toTechnicianResponse)
                 .toList();
     }
 
     // =========================
-    // MAPPERS (контекстные)
+    // ADMIN (NEW)
     // =========================
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrders() {
+        return orderRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toAdminResponse)
+                .toList();
+    }
 
-    /**
-     * Ответ для CLIENT:
-     * - technician заполняем (если назначен)
-     * - customer не отдаём
-     */
+    // =========================
+    // MAPPERS
+    // =========================
     private OrderResponse toClientResponse(Order order) {
         return baseResponse(order)
                 .customer(null)
@@ -215,11 +211,6 @@ public class OrderService {
                 .build();
     }
 
-    /**
-     * Ответ для TECHNICIAN:
-     * - customer заполняем
-     * - technician не отдаём (т.к. это он сам)
-     */
     private OrderResponse toTechnicianResponse(Order order) {
         return baseResponse(order)
                 .customer(buildCustomerDto(order.getCustomer()))
@@ -228,8 +219,16 @@ public class OrderService {
     }
 
     /**
-     * Базовые поля ответа (без сторон).
+     * ADMIN:
+     * видит и клиента, и техника одновременно
      */
+    private OrderResponse toAdminResponse(Order order) {
+        return baseResponse(order)
+                .customer(buildCustomerDto(order.getCustomer()))
+                .technician(buildTechnicianDto(order.getTechnician()))
+                .build();
+    }
+
     private OrderResponse.OrderResponseBuilder baseResponse(Order order) {
         return OrderResponse.builder()
                 .id(order.getId())
@@ -264,7 +263,9 @@ public class OrderService {
     private OrderTechnicianDto buildTechnicianDto(User technician) {
         if (technician == null) return null;
 
-        Profile p = profileRepository.findByUserIdAndUserRole(technician.getId(), Role.TECHNICIAN).orElse(null);
+        Profile p = profileRepository
+                .findByUserIdAndUserRole(technician.getId(), Role.TECHNICIAN)
+                .orElse(null);
 
         return OrderTechnicianDto.builder()
                 .userId(technician.getId())
