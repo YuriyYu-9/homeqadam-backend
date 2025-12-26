@@ -17,7 +17,6 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // CLIENT: создать отзыв по заказу
     @PostMapping("/order/{orderId}")
     public ReviewResponse create(
             @AuthenticationPrincipal CustomUserDetails principal,
@@ -28,13 +27,11 @@ public class ReviewController {
         return reviewService.createReview(clientId, orderId, request);
     }
 
-    // PUBLIC: все отзывы
     @GetMapping
     public List<ReviewResponse> all() {
         return reviewService.getAllReviews();
     }
 
-    // PUBLIC: отзывы по мастеру
     @GetMapping("/technician/{technicianId}")
     public List<ReviewResponse> byTechnician(@PathVariable Long technicianId) {
         return reviewService.getReviewsByTechnician(technicianId);

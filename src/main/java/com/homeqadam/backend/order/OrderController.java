@@ -16,9 +16,6 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // =========================
-    // CREATE ORDER (CLIENT)
-    // =========================
     @PostMapping
     public OrderResponse create(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -30,9 +27,6 @@ public class OrderController {
         );
     }
 
-    // =========================
-    // MY ORDERS (CLIENT)
-    // =========================
     @GetMapping("/my")
     public List<OrderResponse> myOrders(
             @AuthenticationPrincipal CustomUserDetails user
@@ -42,9 +36,6 @@ public class OrderController {
         );
     }
 
-    // =========================
-    // CANCEL ORDER (CLIENT)
-    // =========================
     @PostMapping("/{orderId}/cancel")
     public OrderResponse cancel(
             @PathVariable Long orderId,
@@ -56,9 +47,6 @@ public class OrderController {
         );
     }
 
-    // =========================
-    // COMPLETE ORDER (CLIENT)
-    // =========================
     @PostMapping("/{orderId}/complete")
     public OrderResponse complete(
             @PathVariable Long orderId,

@@ -14,6 +14,5 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
 
     Optional<Profile> findByUserIdAndUserRole(Long userId, Role role);
 
-    // ✅ список профилей по роли (TECHNICIAN)
     List<Profile> findByUserRole(Role role);
 }

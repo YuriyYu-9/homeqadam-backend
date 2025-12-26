@@ -56,7 +56,6 @@ public class Order {
     @Column(nullable = false, length = 255)
     private String address;
 
-    // когда клиенту удобно выполнить заказ
     private LocalDateTime scheduledAt;
 
     // =========================
@@ -75,19 +74,14 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // мастер принял заказ
     private LocalDateTime acceptedAt;
 
-    // мастер начал выполнение
     private LocalDateTime startedAt;
 
-    // клиент подтвердил завершение
     private LocalDateTime completedAt;
 
-    // заказ отменён
     private LocalDateTime cancelledAt;
 
-    // кто отменил заказ
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private CancelledBy cancelledBy;

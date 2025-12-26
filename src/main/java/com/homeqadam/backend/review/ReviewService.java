@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-// 🔥 ВАЖНО: этот импорт ОБЯЗАТЕЛЕН
+// ВАЖНО: этот импорт ОБЯЗАТЕЛЕН
 import com.homeqadam.backend.review.Review;
 
 @Service

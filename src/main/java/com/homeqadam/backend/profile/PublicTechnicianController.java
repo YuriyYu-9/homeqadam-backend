@@ -14,13 +14,11 @@ public class PublicTechnicianController {
 
     private final ProfileService profileService;
 
-    // ✅ список мастеров
     @GetMapping
     public List<PublicTechnicianListItemResponse> list() {
         return profileService.getPublicTechnicians();
     }
 
-    // ✅ профиль одного мастера
     @GetMapping("/{userId}")
     public PublicTechnicianProfileResponse getOne(@PathVariable Long userId) {
         return profileService.getPublicTechnicianProfile(userId);

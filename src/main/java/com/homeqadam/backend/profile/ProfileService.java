@@ -46,22 +46,18 @@ public class ProfileService {
         Profile profile = profileRepository.findByUserId(userId)
                 .orElseGet(() -> Profile.builder().user(user).build());
 
-        // базовые поля (для всех)
         profile.setFirstName(normalizeRequired(req.getFirstName(), "firstName"));
         profile.setLastName(normalizeRequired(req.getLastName(), "lastName"));
         profile.setPhone(normalizeRequired(req.getPhone(), "phone"));
 
-        // telegram — общий и публичный в read-only профиле мастера (по твоему решению)
         profile.setTelegram(normalizeOptional(req.getTelegram()));
 
-        // avatar: только TECHNICIAN
         if (user.getRole() == Role.TECHNICIAN) {
             profile.setAvatarUrl(normalizeOptional(req.getAvatarUrl()));
         } else {
             profile.setAvatarUrl(null);
         }
 
-        // TECHNICIAN анкета
         if (user.getRole() == Role.TECHNICIAN) {
             ServiceCategory specialty = parseSpecialty(req.getSpecialty());
             Integer exp = req.getExperienceYears();
@@ -90,7 +86,6 @@ public class ProfileService {
         return toResponse(profile);
     }
 
-    // ✅ Публичный профиль мастера (детально)
     @Transactional(readOnly = true)
     public PublicTechnicianProfileResponse getPublicTechnicianProfile(Long userId) {
         Profile profile = profileRepository
@@ -109,7 +104,6 @@ public class ProfileService {
                 .build();
     }
 
-    // ✅ Публичный список мастеров (коротко)
     @Transactional(readOnly = true)
     public List<PublicTechnicianListItemResponse> getPublicTechnicians() {
         return profileRepository.findByUserRole(Role.TECHNICIAN)

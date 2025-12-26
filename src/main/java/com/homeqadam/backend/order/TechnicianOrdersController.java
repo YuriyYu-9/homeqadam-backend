@@ -15,10 +15,6 @@ public class TechnicianOrdersController {
 
     private final OrderService orderService;
 
-    /**
-     * ✅ Новый основной эндпоинт:
-     * категория берётся из профиля мастера в БД.
-     */
     @GetMapping("/available")
     public List<OrderResponse> available(
             @AuthenticationPrincipal CustomUserDetails principal
@@ -26,11 +22,6 @@ public class TechnicianOrdersController {
         return orderService.getAvailableOrdersForTechnician(principal.getUser().getId());
     }
 
-    /**
-     * ✅ Legacy (не обязательно, но удобно оставить на время)
-     * чтобы можно было тестить руками:
-     * /technician/orders/available-legacy?category=ELECTRICITY
-     */
     @GetMapping("/available-legacy")
     public List<OrderResponse> availableLegacy(@RequestParam("category") String category) {
         return orderService.getAvailableOrdersForTechnicianLegacy(category);

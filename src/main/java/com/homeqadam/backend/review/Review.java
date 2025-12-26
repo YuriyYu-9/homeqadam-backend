@@ -33,13 +33,13 @@ public class Review {
     @JsonIgnore
     private Order order;
 
-    // кто оставил (клиент)
+    // кто оставил
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "client_id", nullable = false)
     @JsonIgnore
     private User client;
 
-    // на кого отзыв (мастер)
+    // на кого отзыв
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "technician_id", nullable = false)
     @JsonIgnore
